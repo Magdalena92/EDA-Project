@@ -1,0 +1,268 @@
+---
+output:
+  html_document: default
+  pdf_document: default
+---
+Exploratory Data Analysis Project
+========================================================
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, packages}
+# Load all of the packages that you end up using
+# in your analysis in this code chunk.
+
+# Notice that the parameter "echo" was set to FALSE for this code chunk.
+# This prevents the code from displaying in the knitted HTML output.
+# You should set echo=FALSE for all code chunks in your file.
+library(ggplot2)
+library(gridExtra)
+library(dplyr)
+library(stats)
+library(GGally)
+library(scales)
+library(memisc)
+```
+
+```{r echo=FALSE, message=FALSE, Load_the_Data}
+# Load the Data
+WineQuality <- read.csv('wineQualityWhites.csv')
+```
+
+<h1> Univariate Plots Section </h1>
+<p> I will explore dataset of quality and attributes for 4 898 white wines </p>
+```{r echo=FALSE, message=FALSE, Univariate_Plots}
+dim(WineQuality)
+str(WineQuality)
+summary(WineQuality)
+```
+<p> My dataset includes 13 variables with 4 898 observations. I think that quality is the most interesting variable in this dataset.</p>
+```{r echo=FALSE, message=FALSE}
+qplot(x = quality, data = WineQuality, binwidth = 1)
+```
+
+<p> Most wines have 6 scores of quality. Sulphates, pH and alcohol are also worth of exploration </p>
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+qplot(x = pH, data = WineQuality) 
+summary(WineQuality$pH)
+qplot(x = sulphates, data = WineQuality)
+summary(WineQuality$sulphates)
+qplot(x = alcohol, data = WineQuality)
+summary(WineQuality$alcohol)
+
+
+```
+
+<p> Most wines have approximately 3.15 pH, between 0.46 and 0.51 g/dm^3 of sulphates and 9.2 to 9.5% of alcohol. </p>
+
+```{r echo=FALSE, message=FALSE}
+
+qplot(free.sulfur.dioxide, data = WineQuality)
+g1 <- qplot(x = free.sulfur.dioxide, data = WineQuality)
+g2 <- qplot(x = log10(free.sulfur.dioxide + 1), data = WineQuality)
+g3 <- qplot(x = sqrt(free.sulfur.dioxide), data = WineQuality)
+grid.arrange(g1, g2, g3, ncol = 2)
+summary(WineQuality$free.sulfur.dioxide)
+
+```
+<p> Most wines have free sulfur dioxide between 30 and 40 mg/dm^3. </p>
+
+```{r echo=FALSE, message=FALSE}
+qplot(x = fixed.acidity, data = WineQuality)
+summary(WineQuality$fixed.acidity)
+
+```
+
+
+```{r echo=FALSE, message=FALSE}
+qplot(x = volatile.acidity, data = WineQuality)
+summary(WineQuality$volatile.acidity)
+
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+qplot(x = citric.acid, data = WineQuality)
+
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+qplot(x = residual.sugar, data = WineQuality)
+qplot(x = log10(residual.sugar), data = WineQuality)
+
+```
+
+
+```{r echo=FALSE, message=FALSE}
+qplot(x = chlorides, data = WineQuality)
+
+```
+
+```{r echo=FALSE, message=FALSE}
+qplot(x = total.sulfur.dioxide, data = WineQuality)
+```
+
+```{r echo=FALSE, message=FALSE}
+qplot(x = density, data = WineQuality)
+
+```
+<p> Quality of wines with high content of pH (over 3.3), sulphates (over 0.7 g/dm^3) and alcohol (over 11%). </p>
+
+```{r echo=FALSE, message=FALSE}
+qplot(x = quality, data = subset(WineQuality, pH > 3.3 & sulphates > 0.7 & alcohol > 11)) +
+  ggtitle("Quality of wine with high content of pH, sulphates and alcohol")
+WineQualityHighContent <- subset(WineQuality, pH > 3.3 & sulphates > 0.7 & alcohol > 11)
+summary(WineQualityHighContent$quality)
+```
+<p> Quality of wines with low content of pH (below 3), sulphates (below 0.4 g/dm^3) and alcohol (below 10%). </p>
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+qplot(x = quality, data = subset(WineQuality, pH < 3 & sulphates < 0.4 & alcohol < 10)) +
+  ggtitle("Quality of wine with low content of pH, sulphates and alcohol")
+
+WineQualityLowContent <- subset(WineQuality, pH < 3 & sulphates < 0.4 & alcohol < 10)
+summary(WineQualityLowContent$quality)
+```
+<p> There is more wines with low content of pH, sulphates and alcohol but they have less quality. </p>
+
+# Univariate Analysis
+
+### What is the structure of your dataset?
+Dataset includes 4 898 wines with 12 features (fixed acidity, volatile acidity, citric acid, residual sugar, chlorides, free sulfur dioxide, density, pH, sulphates, alcohol and quality). 
+All data are provided in g/dm^3 with exception of density (g/dm^3), free sulfur dioxide (mg/dm^3pH), total sulfur dioxide (mg/dm^3pH), alcohol (%) and quality (scores from 0 to 10). <p>Other observations: </p>
+<ul>
+<li>Most wines have 6 scores of quality.</li>
+<li>Most wines have 3.15 pH.</li>
+<li>The median sulphates is 0.47 g/dm^3.</li>
+<li>The median alcohol is 10.4%.</li>
+<li>The median free sulfur dioxide is 34.0 mg/dm^3.</li>
+</ul>
+
+### What is/are the main feature(s) of interest in your dataset?
+The main feature in dataset is quality. I will examine which feature has the most influence on quality.
+### What other features in the dataset do you think will help support your investigation into your feature(s) of interest?
+I think pH, sulphates, alcohol, pH and free sulfur dioxide have big impact on quality.
+### Of the features you investigated, were there any unusual distributions? Did you perform any operations on the data to tidy, adjust, or change the form of the data? If so, why did you do this?
+I log-transformed the right skewed residual sugar distribution. The transformed distribution for residual sugar resembles bimodal.
+
+
+# Bivariate Plots Section
+```{r echo=FALSE, message=FALSE, Bivariate_Plots}
+WineQualityMainfeatures <- data.frame(quality = WineQuality$quality, pH = WineQuality$pH, sulphates = WineQuality$sulphates, alcohol = WineQuality$alcohol, free.sulfur.dioxide = WineQuality$free.sulfur.dioxide)
+round(cor(WineQualityMainfeatures, method = 'pearson'), 3)
+
+set.seed(20022012)
+WineQuality_samp <- WineQuality[sample(1:length(WineQuality$quality), 1000), ]
+ggpairs(WineQuality_samp)
+
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(aes(x = alcohol, y = quality), data = WineQuality) +
+  geom_point()
+
+test1lm <- lm(quality~alcohol,data=WineQuality)
+summary(test1lm)
+```
+<p> I can see that alcohol has insignificant influence on wine's quality. </p>
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+
+ggplot(aes(x = pH, y = quality), data = WineQuality) +
+  geom_point()
+
+ggplot(aes(x = sulphates, y = quality), data = WineQuality) +
+  geom_point()
+
+ggplot(aes(x = free.sulfur.dioxide, y = quality), data = WineQuality) +
+  geom_point()
+```
+<p>pH, sulphates and free sulfur dioxide don't seem to have relevant influence on wine's quality. </p>
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+round(cor(WineQuality), 3)
+```
+<p>As pH, sulphates and alcohol don't seem to have relevant influence on wine's quality, I will examine another relationships, where correlation is large.</p>
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+ggplot(aes(x = pH, y = fixed.acidity), data = WineQuality) +
+  geom_point() +
+  geom_smooth(method = 'lm')
+```
+
+<p>Fixed acidity is inversely proportional to pH.</p>
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(aes(x = residual.sugar, y = density), data = WineQuality) +
+  geom_point() +
+  geom_smooth(method = 'lm')
+```
+<p> I can see also linear relationship between residual sugar and density. </p> 
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(aes(x = total.sulfur.dioxide, y = density), data = WineQuality) +
+  geom_point() +
+  geom_smooth(method = 'lm')
+```
+<p>Also density seems to increase with total sulfur dioxide's increment.</p>
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(aes(x = alcohol, y = density), data = WineQuality) +
+  geom_point() +
+  geom_smooth(method = 'lm')
+```
+<p>On the contrary, density decrese with alcohol's increment.</p>
+# Bivariate Analysis
+
+### Talk about some of the relationships you observed in this part of the investigation. How did the feature(s) of interest vary with other features in the dataset?
+I observed that examined features: pH, sulphates and alcohol don't have significan influence on quality of wine. These features are not useful in prediction of wine's quality.
+
+### Did you observe any interesting relationships between the other features (not the main feature(s) of interest)?
+I noticed inverse proportion between pH and fixed acidity but also between density and alcohol. There is also linear relationship between residual sugar and density. Although density grow when total sulfur dioxide grow.
+
+### What was the strongest relationship you found?
+The strongest relationship is, definitly between residual sugar and density.
+
+
+# Multivariate Plots Section
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(aes(x = residual.sugar, y = density, color = quality), data = WineQuality) +
+  geom_point() +
+  scale_fill_brewer(type = 'div') 
+
+ggplot(aes(x = residual.sugar, y = density), data = WineQuality) +
+  geom_boxplot() +
+  facet_wrap(~quality)
+```
+<p>Wines with the worst quality have high density and the best wines have low density.</p>
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(aes(x = alcohol, y = density, color = quality), data = WineQuality) +
+  geom_point() +
+  scale_fill_brewer(type = 'div')
+
+ggplot(aes(x = alcohol, y = density), data = WineQuality) +
+  geom_boxplot() +
+  facet_wrap(~quality)
+
+
+```
+<p>The best wines have from 10 to 13% alcohol. The worst wines have from 8% to 12% alcohol.</p>
+
+# Multivariate Analysis
+
+### Talk about some of the relationships you observed in this part of the investigation. Were there features that strengthened each other in terms of looking at your feature(s) of interest?
+<p>Wines with big content of alcohol have 7 or 8 scores for quality. Also the worst wines have high content of free sulfur dioxide and high density. The best wines have low content of free sulfur dioxide.</p>
+
+# Reflection
+<p>During data examination, I observed following relationship: </p>
+<ul>
+1. pH, sulphates and alcohol don't have significant impact on quality.
+<li>Fixed acidity decrease when pH grows. </li>
+<li>Density depends residual sugar and total sulfur dioxide.</li>
+<li>Density is inversely proportional to alcohol.</li>
+<li>The best wines have low density.</p>
+</ul>
+<p>To sum up, I can tell that experts evaluate quality of wine on the base of their own preferences. I noticed strong relationships between residual sugar and density but also between alcohol and density.</p>
